@@ -80,6 +80,69 @@ function shortSection(section) {
   return section;
 }
 
+/* ---------------- Key-term highlighting ---------------- */
+// Longest phrases first so the regex alternation prefers a full phrase
+// ("Enterprise Value") over a shorter substring match ("Value") at the
+// same position.
+const KEY_TERMS = [
+  "Enterprise Value", "Equity Value", "Working Capital", "Net Income",
+  "Income Statement", "Balance Sheet", "Cash Flow Statement",
+  "Cash Flow from Operations", "Cash Flow from Investing",
+  "Cash Flow from Financing", "Free Cash Flow", "Discount Rate",
+  "Discounted Cash Flow", "Terminal Value", "Purchase Price",
+  "Purchase Equity Value", "Net Operating Assets", "Goodwill",
+  "Shareholders' Equity", "Shareholders’ Equity", "Retained Earnings",
+  "Deferred Tax", "Net Operating Losses", "Treasury Stock Method",
+  "Diluted Shares Outstanding", "Comparable Companies",
+  "Precedent Transactions", "Synergies", "Cost Synergies",
+  "Revenue Synergies", "Accretion/Dilution", "Accretion", "Dilution",
+  "Capital Expenditures", "Capital Structure", "Working Capital Changes",
+  "Stock-Based Compensation", "Non-Controlling Interest",
+  "Minority Interest", "Convertible Bonds", "Cost of Equity",
+  "Cost of Debt", "Dividend Recap", "Senior Debt", "Subordinated Debt",
+  "Debt Paydown", "Stub Period", "Change of Control", "Asset Purchase",
+  "Stock Purchase", "Tax Rate", "Multiples", "Leverage", "Revolver",
+  "Mezzanine", "Depreciation", "Amortization", "Beta",
+  "EBITDA", "EBIT", "PP&E", "WACC", "CapEx", "IRR", "MOIC", "EPS",
+  "LBO", "DCF", "M&A", "IPO",
+];
+
+function escapeRegex(s) {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+const TERM_REGEX = new RegExp(
+  `(?<![A-Za-z0-9])(${[...KEY_TERMS].sort((a, b) => b.length - a.length).map(escapeRegex).join("|")})(?![A-Za-z0-9])`,
+  "gi"
+);
+
+// Returns a DocumentFragment with KEY_TERMS wrapped in <mark class="term-hl">
+// when highlighting is on, or a single plain text node otherwise.
+function highlightedNodes(text) {
+  const frag = document.createDocumentFragment();
+  if (!state.highlightOn) {
+    frag.appendChild(document.createTextNode(text));
+    return frag;
+  }
+  TERM_REGEX.lastIndex = 0;
+  let lastIndex = 0;
+  let m;
+  while ((m = TERM_REGEX.exec(text))) {
+    if (m.index > lastIndex) {
+      frag.appendChild(document.createTextNode(text.slice(lastIndex, m.index)));
+    }
+    const mark = document.createElement("mark");
+    mark.className = "term-hl";
+    mark.textContent = m[0];
+    frag.appendChild(mark);
+    lastIndex = m.index + m[0].length;
+  }
+  if (lastIndex < text.length) {
+    frag.appendChild(document.createTextNode(text.slice(lastIndex)));
+  }
+  return frag;
+}
+
 /* ---------------- Data prep ---------------- */
 let ALL_CARDS = [];
 (function prepCards() {
@@ -105,6 +168,7 @@ const state = {
   pos: 0,
   flipped: false,
   shuffleOn: false,
+  highlightOn: false,
 };
 
 const homeEl = document.getElementById("home");
@@ -133,6 +197,13 @@ const shuffleToggle = document.getElementById("shuffle-toggle");
 shuffleToggle.checked = false;
 shuffleToggle.addEventListener("change", () => {
   state.shuffleOn = shuffleToggle.checked;
+});
+
+const highlightToggle = document.getElementById("highlight-toggle");
+highlightToggle.checked = false;
+highlightToggle.addEventListener("change", () => {
+  state.highlightOn = highlightToggle.checked;
+  if (!studyEl.classList.contains("hidden")) renderCard();
 });
 
 document.getElementById("study-all-btn").addEventListener("click", () => {
@@ -237,13 +308,13 @@ function renderBackBody(card) {
     const img = makeSticker(file, "sticker-img sticker-big");
     img.style.width = `${size}px`;
     img.style.height = `${size}px`;
-    backBodyEl.appendChild(document.createTextNode(card.answer));
+    backBodyEl.appendChild(highlightedNodes(card.answer));
     backBodyEl.appendChild(img);
   } else {
     const [left, right] = deltaruneImagesFor(card, 2);
     backBodyEl.appendChild(makeSticker(left, "sticker-img sticker-small sticker-left"));
     backBodyEl.appendChild(makeSticker(right, "sticker-img sticker-small sticker-right"));
-    backBodyEl.appendChild(document.createTextNode(card.answer));
+    backBodyEl.appendChild(highlightedNodes(card.answer));
   }
 }
 
@@ -259,7 +330,8 @@ function renderCard() {
   frontTagEl.textContent = shortSection(card.section);
   frontTagEl.style.background = color;
   frontNumEl.textContent = `Card ${card.number}`;
-  frontBodyEl.textContent = card.question;
+  frontBodyEl.innerHTML = "";
+  frontBodyEl.appendChild(highlightedNodes(card.question));
 
   backTagEl.textContent = shortSection(card.section);
   backTagEl.style.background = color;
