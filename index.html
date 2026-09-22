@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="theme-color" content="#2563eb" />
+<title>IB Basics Flashcards</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<div id="app">
+
+  <!-- Home / menu -->
+  <div id="home" style="display:flex; flex-direction:column; flex:1; min-height:0;">
+    <header class="top">
+      <div>
+        <h1>400 IB Questions — Basics</h1>
+        <div class="sub" id="total-count"></div>
+      </div>
+      <span title="Deltarune mode">💜</span>
+    </header>
+
+    <div class="hero-card">
+      <h2>Study everything</h2>
+      <p>Run through every card from all 6 sections in one deck.</p>
+      <button id="study-all-btn">Study Everything →</button>
+    </div>
+
+    <div class="toolbar-row">
+      <div>
+        <div class="label">Shuffle order</div>
+        <div class="desc">Randomize cards within any deck you open</div>
+      </div>
+      <label class="switch">
+        <input type="checkbox" id="shuffle-toggle" />
+        <span class="track"></span>
+      </label>
+    </div>
+
+    <div class="tabs">
+      <button class="active" data-tab="sections">By Section</button>
+    </div>
+
+    <div class="panel">
+      <div id="panel-sections" class="section-list"></div>
+    </div>
+  </div>
+
+  <!-- Study / flashcard view -->
+  <div id="study" class="hidden">
+    <div class="study-header">
+      <div class="deck-name" id="deck-name"></div>
+      <div class="progress-text" id="progress-text"></div>
+    </div>
+    <div class="progress-bar"><div class="fill" id="progress-fill"></div></div>
+
+    <div class="card-stage" id="card-stage">
+      <div class="flashcard" id="flashcard">
+        <div class="face front">
+          <span class="tag" id="front-tag"></span>
+          <div class="num" id="front-num"></div>
+          <div class="body" id="front-body"></div>
+          <div class="hint">Tap card to flip</div>
+        </div>
+        <div class="face back">
+          <span class="tag" id="back-tag"></span>
+          <div class="num" id="back-num"></div>
+          <div class="body" id="back-body"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="controls-row">
+      <button class="nav-btn" id="prev-btn">‹</button>
+      <button class="flip-btn" id="flip-btn">Flip</button>
+      <button class="nav-btn" id="next-btn">›</button>
+    </div>
+    <div class="bottom-row">
+      <button class="ghost" id="back-to-menu-btn">← Menu</button>
+      <button class="ghost" id="reshuffle-btn">🔀 Reshuffle</button>
+    </div>
+  </div>
+
+</div>
+
+<script src="cards.js"></script>
+<script src="app.js"></script>
+<script>
+  document.getElementById("total-count").textContent = CARDS.length + " cards · 6 sections";
+</script>
+</body>
+</html>
