@@ -31,7 +31,7 @@
 
     <div class="hero-card">
       <h2>Study everything</h2>
-      <p>Run through every card from all 6 sections in one deck.</p>
+      <p id="hero-desc"></p>
       <button id="study-all-btn">Study Everything →</button>
     </div>
 
@@ -58,7 +58,8 @@
     </div>
 
     <div class="tabs">
-      <button class="active" data-tab="sections">By Section</button>
+      <button class="active" data-level="basic">Basic</button>
+      <button data-level="advanced">Advanced</button>
     </div>
 
     <div class="panel">
@@ -104,9 +105,11 @@
 </div>
 
 <script src="cards.js"></script>
+<script src="cards-advanced.js"></script>
 <script src="app.js"></script>
 <script>
-  document.getElementById("total-count").textContent = CARDS.length + " cards · 6 sections";
+  document.getElementById("total-count").textContent =
+    CARDS.length + " basic · " + CARDS_ADVANCED.length + " advanced · 6 sections";
 </script>
 </body>
 </html>

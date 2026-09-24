@@ -144,12 +144,23 @@ function highlightedNodes(text) {
 }
 
 /* ---------------- Data prep ---------------- */
+const LEVELS = {
+  basic: { label: "Basic", cards: CARDS },
+  advanced: { label: "Advanced", cards: CARDS_ADVANCED },
+};
+
 let ALL_CARDS = [];
 (function prepCards() {
-  ALL_CARDS = CARDS.map((c, idx) => ({ ...c, _idx: idx }));
+  ALL_CARDS = Object.entries(LEVELS)
+    .flatMap(([level, { cards }]) => cards.map((c) => ({ ...c, level })))
+    .map((c, idx) => ({ ...c, _idx: idx }));
 })();
 
 const SECTIONS = [...new Set(ALL_CARDS.map((c) => c.section))];
+
+function cardsAtLevel(level) {
+  return ALL_CARDS.filter((c) => c.level === level);
+}
 
 function shuffle(arr) {
   const a = [...arr];
@@ -169,6 +180,7 @@ const state = {
   flipped: false,
   shuffleOn: false,
   highlightOn: false,
+  level: "basic",
 };
 
 const homeEl = document.getElementById("home");
@@ -190,6 +202,8 @@ tabButtons.forEach((btn) => {
   btn.addEventListener("click", () => {
     tabButtons.forEach((b) => b.classList.remove("active"));
     btn.classList.add("active");
+    state.level = btn.dataset.level;
+    renderHome();
   });
 });
 
@@ -207,14 +221,22 @@ highlightToggle.addEventListener("change", () => {
 });
 
 document.getElementById("study-all-btn").addEventListener("click", () => {
-  startDeck("All Sections", ALL_CARDS);
+  startDeck(`All Sections — ${LEVELS[state.level].label}`, cardsAtLevel(state.level));
 });
 
+const heroDescEl = document.getElementById("hero-desc");
+
 function renderHome() {
+  const levelCards = cardsAtLevel(state.level);
+  const levelLabel = LEVELS[state.level].label;
+  heroDescEl.textContent = `Run through all ${levelCards.length} ${levelLabel} cards from all 6 sections in one deck.`;
+
   const secPanel = panels.sections;
   secPanel.innerHTML = "";
   MODULES.forEach((mod) => {
-    const sections = SECTIONS.filter((s) => moduleOf(s) === mod.label);
+    const sections = SECTIONS.filter(
+      (s) => moduleOf(s) === mod.label && levelCards.some((c) => c.section === s)
+    );
     if (!sections.length) return;
 
     const label = document.createElement("div");
@@ -223,7 +245,7 @@ function renderHome() {
     secPanel.appendChild(label);
 
     sections.forEach((section) => {
-      const cards = ALL_CARDS.filter((c) => c.section === section);
+      const cards = levelCards.filter((c) => c.section === section);
       const row = document.createElement("div");
       row.className = "deck-row";
       row.style.borderLeftColor = sectionColor(section);
@@ -234,7 +256,9 @@ function renderHome() {
           <div class="count">${cards.length} card${cards.length === 1 ? "" : "s"}</div>
         </div>
         <span class="chev">›</span>`;
-      row.addEventListener("click", () => startDeck(shortSection(section), cards));
+      row.addEventListener("click", () =>
+        startDeck(`${shortSection(section)} — ${levelLabel}`, cards)
+      );
       secPanel.appendChild(row);
     });
   });
@@ -326,14 +350,18 @@ function renderCard() {
 
   const card = currentCard();
   const color = sectionColor(card.section);
+  const tagText =
+    card.level === "advanced"
+      ? `${shortSection(card.section)} · Adv`
+      : shortSection(card.section);
 
-  frontTagEl.textContent = shortSection(card.section);
+  frontTagEl.textContent = tagText;
   frontTagEl.style.background = color;
   frontNumEl.textContent = `Card ${card.number}`;
   frontBodyEl.innerHTML = "";
   frontBodyEl.appendChild(highlightedNodes(card.question));
 
-  backTagEl.textContent = shortSection(card.section);
+  backTagEl.textContent = tagText;
   backTagEl.style.background = color;
   backNumEl.textContent = `Card ${card.number} — Answer`;
   renderBackBody(card);
